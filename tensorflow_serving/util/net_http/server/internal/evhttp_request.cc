@@ -173,7 +173,7 @@ void EvHTTPRequest::WriteResponseBytes(const char* data, int64_t size) {
         // 创建一个足够大的 std::string 来存储 evbuffer 的数据
         std::string data(buffer_len1, '\0');  // 创建一个大小为 buffer_len 的字符串
         // 将 evbuffer 中的数据复制到 std::string 中
-        evbuffer_copyout(output_buf, &data[0], buffer_len);  // 将数据复制到 std::string 的内部缓冲区
+        evbuffer_copyout(output_buf, &data[0], buffer_len1);  // 将数据复制到 std::string 的内部缓冲区
 
         // 打印转换后的字符串
         std::cout << "Data in evbuffer写入之后: " << data << std::endl;

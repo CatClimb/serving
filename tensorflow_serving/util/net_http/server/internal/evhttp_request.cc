@@ -154,6 +154,7 @@ absl::string_view EvHTTPRequest::http_method() const {
 bool EvHTTPRequest::Initialize() {
   output_buf = evbuffer_new();
   return output_buf != nullptr;
+  // return true;
 }
 
 void EvHTTPRequest::WriteResponseBytes(const char* data, int64_t size) {
@@ -162,22 +163,10 @@ void EvHTTPRequest::WriteResponseBytes(const char* data, int64_t size) {
     NET_LOG(FATAL, "Request not initialized.");
     return;
   }
- size_t buffer_len = evbuffer_get_length(output_buf); // 获取缓冲区中数据的长度
-    if (buffer_len > 0) {
-        // 创建一个足够大的 std::string 来存储 evbuffer 的数据
-        std::string data(buffer_len, '\0');  // 创建一个大小为 buffer_len 的字符串
-        // 将 evbuffer 中的数据复制到 std::string 中
-        evbuffer_copyout(output_buf, &data[0], buffer_len);  // 将数据复制到 std::string 的内部缓冲区
-
-        // 打印转换后的字符串
-        std::cout << "Data in evbuffer写入之前: " << data << std::endl;
-        std::cout << "buffer_len:" << buffer_len << std::endl;
-    } else {
-        std::cout << "evbuffer is empty写入之前:" << std::endl;
-    }
-  std::cout << "buffer_len:" 
-  << buffer_len
+  std::cout << "size:" 
+  << size
   << std::endl;
+  // output_buf=evbuffer_new_with_size(size+1)
   int ret = evbuffer_add(output_buf, data, static_cast<size_t>(size));
   size_t buffer_len1 = evbuffer_get_length(output_buf); // 获取缓冲区中数据的长度
     if (buffer_len1 > 0) {
@@ -191,7 +180,7 @@ void EvHTTPRequest::WriteResponseBytes(const char* data, int64_t size) {
         std::cout << "buffer_len:" << buffer_len1 << std::endl;
     } else {
         std::cout << "evbuffer is empty写入之后:" << std::endl;
-    }
+  }
   std::cout << "buffer_len:" 
   << buffer_len1
   << std::endl;
@@ -414,7 +403,7 @@ void EvHTTPRequest::ReplyWithStatus(HTTPStatusCode status) {
     // to the event-loop
   }
 }
-
+//
 void EvHTTPRequest::EvSendReply(HTTPStatusCode status) {
   size_t buffer_len = evbuffer_get_length(output_buf); // 获取缓冲区中数据的长度
     if (buffer_len > 0) {

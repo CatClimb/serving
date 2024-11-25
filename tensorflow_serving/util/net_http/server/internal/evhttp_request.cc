@@ -1,4 +1,4 @@
-/* Copyright 2018 Google Inc. All Rights Reserved.
+/*  
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ limitations under the License.
 #include "tensorflow_serving/util/net_http/server/internal/evhttp_request.h"
 
 #include <zlib.h>
-
+#include <iostream>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -150,10 +150,46 @@ void EvHTTPRequest::WriteResponseBytes(const char* data, int64_t size) {
     return;
   }
 
-  int ret = evbuffer_add(output_buf, data, static_cast<size_t>(size));
-  if (ret == -1) {
-    NET_LOG(ERROR, "Failed to write %zu bytes data to output buffer",
-            static_cast<size_t>(size));
+  
+}
+void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status){
+  int64_t data_size = static_cast<int64_t>(data.size());
+  int64_t chunk_size=10240;
+  int64_t offset=0;
+  int64_t remaining_size;
+  int64_t current_chunk_size;
+  int ret;
+  absl::string_view chunk_data;
+  //分块响应开启
+  evhttp_send_reply_start(parsed_request_->request,static_cast<int>(status),"OK");
+  std::cout << "分块响应发送开启" << std::endl;
+  while(offset < data_size){
+     remaining_size = data_size-offset;
+     current_chunk_size = (remaining_size < chunk_size) ? remaining_size : chunk_size;
+     chunk_data = data.substr(offset, current_chunk_size);
+     //分块数据写入
+     std::cout << "分块数据写入" << std::endl;
+     int ret = evbuffer_add(output_buf, chunk_data, static_cast<size_t>(size));
+     if (ret == -1) {
+        std::cout << "分块写入缓存失败" << std::endl;
+        NET_LOG(ERROR, "Failed to write %zu bytes data to output buffer",
+                static_cast<size_t>(size));
+     }
+     //分块响应
+     evhttp_send_reply_chunk(req,output_buf);
+     std::cout << "分块响应" << std::endl;
+  }
+  evhttp_request* request_1 =parsed_request_->request;
+   
+  bool result =
+    server_->EventLoopSchedule([this, request_1]() {
+       EvSendReply2(request_1);
+       });
+  if (!result) {
+    NET_LOG(ERROR, "Failed to EventLoopSchedule ReplyWithStatus()");
+    Abort();
+    // TODO(wenboz): should have a forced abort that doesn't write back anything
+    // to the event-loop
   }
 }
 
@@ -370,7 +406,12 @@ void EvHTTPRequest::EvSendReply(HTTPStatusCode status) {
   server_->DecOps();
   delete this;
 }
-
+void EvHTTPRequest::EvSendReply2(evhttp_request* request) {
+  //分块响应结束
+  evhttp_send_reply_end(request);
+  server_->DecOps();
+  delete this;
+}
 void EvHTTPRequest::Reply() { ReplyWithStatus(HTTPStatusCode::OK); }
 
 // Treats this as 500 for now and let libevent decide what to do

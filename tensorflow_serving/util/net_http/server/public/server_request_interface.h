@@ -145,7 +145,7 @@ class ServerRequestInterface {
   // the underlying behavior is undefined.
   virtual void PartialReplyWithStatus(HTTPStatusCode status) = 0;
   virtual void PartialReply() = 0;
-
+  virtual void StreamResponse(absl::string_view data,HTTPStatusCode status) = 0;
   // Similar to PartialReply() but with an on_flush callback which will be
   // invoked when the response data has been completely flushed by the
   // transport. This allows the handler to apply transport-provided flow-control

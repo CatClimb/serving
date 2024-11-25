@@ -80,7 +80,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
   void WriteResponseBytes(const char* data, int64_t size) override;
 
   void WriteResponseString(absl::string_view data) override;
-
+  void StreamResponse(absl::string_view data,HTTPStatusCode status) = 0;
   std::unique_ptr<char[], ServerRequestInterface::BlockDeleter>
   ReadRequestBytes(int64_t* size) override;
 
@@ -114,7 +114,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
 
  private:
   void EvSendReply(HTTPStatusCode status);
-
+  void EvSendReply2(HTTPStatusCode status);
   // Returns true if the data needs be uncompressed
   bool NeedUncompressGzipContent();
 

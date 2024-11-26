@@ -158,7 +158,8 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
   int64_t offset=0;
   int64_t remaining_size;
   int64_t current_chunk_size;
-  int ret;
+  const char* chunk_data="";
+  
   absl::string_view chunk_data;
   //分块响应开启
   evhttp_send_reply_start(parsed_request_->request,static_cast<int>(status),"OK");
@@ -166,7 +167,7 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
   while(offset < data_size){
      remaining_size = data_size-offset;
      current_chunk_size = (remaining_size < chunk_size) ? remaining_size : chunk_size;
-     chunk_data = data.substr(offset, current_chunk_size);
+     chunk_data = data.data().substr(offset, current_chunk_size);
      //分块数据写入
      std::cout << "分块数据写入" << std::endl;
      int ret = evbuffer_add(output_buf, chunk_data, data_size);
@@ -176,7 +177,7 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
                 data_size);
      }
      //分块响应
-     evhttp_send_reply_chunk(req,output_buf);
+     evhttp_send_reply_chunk(parsed_request_->request,output_buf);
      std::cout << "分块响应" << std::endl;
   }
   evhttp_request* request_1 =parsed_request_->request;

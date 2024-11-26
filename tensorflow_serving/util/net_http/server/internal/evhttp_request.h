@@ -114,7 +114,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
 
  private:
   void EvSendReply(HTTPStatusCode status);
-  void EvSendReply2(HTTPStatusCode status);
+  void EvSendReply2(evhttp_request* request);
   // Returns true if the data needs be uncompressed
   bool NeedUncompressGzipContent();
 

@@ -159,9 +159,7 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
   int64_t remaining_size;
   int64_t current_chunk_size;
   const char* chunk_data="";
-  
-  absl::string_view chunk_data;
-  //分块响应开启
+    //分块响应开启
   evhttp_send_reply_start(parsed_request_->request,static_cast<int>(status),"OK");
   std::cout << "分块响应发送开启" << std::endl;
   while(offset < data_size){

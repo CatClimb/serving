@@ -80,7 +80,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
   void WriteResponseBytes(const char* data, int64_t size) override;
 
   void WriteResponseString(absl::string_view data) override;
-  void StreamResponse(absl::string_view data,HTTPStatusCode status) = 0;
+  void StreamResponse(absl::string_view data,HTTPStatusCode status) override;
   std::unique_ptr<char[], ServerRequestInterface::BlockDeleter>
   ReadRequestBytes(int64_t* size) override;
 

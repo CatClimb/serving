@@ -169,11 +169,11 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
      chunk_data = data.substr(offset, current_chunk_size);
      //分块数据写入
      std::cout << "分块数据写入" << std::endl;
-     int ret = evbuffer_add(output_buf, chunk_data, static_cast<size_t>(size));
+     int ret = evbuffer_add(output_buf, chunk_data, data_size);
      if (ret == -1) {
         std::cout << "分块写入缓存失败" << std::endl;
         NET_LOG(ERROR, "Failed to write %zu bytes data to output buffer",
-                static_cast<size_t>(size));
+                data_size);
      }
      //分块响应
      evhttp_send_reply_chunk(req,output_buf);

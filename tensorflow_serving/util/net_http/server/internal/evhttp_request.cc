@@ -166,6 +166,7 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
      remaining_size = data_size-offset;
      current_chunk_size = (remaining_size < chunk_size) ? remaining_size : chunk_size;
      chunk_data = data.substr(offset, current_chunk_size).data();
+     offset+=current_chunk_size;
      //分块数据写入
      std::cout << "分块数据写入" << std::endl;
      int ret = evbuffer_add(output_buf, chunk_data, data_size);

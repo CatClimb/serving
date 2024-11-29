@@ -167,13 +167,14 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
   while(offset < data_size){
     chunk_count++;
     std::cout << "块数id：" <<chunk_count<<std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
     remaining_size = data_size-offset;
     current_chunk_size = (remaining_size < chunk_size) ? remaining_size : chunk_size;
     chunk_data = data.substr(offset, current_chunk_size).data();
     offset+=current_chunk_size;
     //分块数据写入
     std::cout << "分块数据写入" << std::endl;
+    NET_LOG(OK, "块数id：",chunk_count);
     int ret = evbuffer_add(output_buf, chunk_data, current_chunk_size);
     if (ret == -1) {
       std::cout << "分块写入缓存失败" << std::endl;
@@ -182,25 +183,25 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
     }
     //分块响应
     size_t buffer_len = evbuffer_get_length(output_buf); // 获取缓冲区中数据的长度
-    if (buffer_len > 0) {
-        std::string data(buffer_len, '\0');  
-        evbuffer_copyout(output_buf, &data[0], buffer_len);
-        // 打印转换后的字符串
-        std::cout << "分块响应之前数据: " << data << std::endl;
-        std::cout << "分块响应之前大小:" << buffer_len << std::endl;
-    } else {
-        std::cout << "分块响应之前数据为空:" << std::endl;
-    }
+    // if (buffer_len > 0) {
+    //     std::string data(buffer_len, '\0');  
+    //     evbuffer_copyout(output_buf, &data[0], buffer_len);
+    //     // 打印转换后的字符串
+    //     std::cout << "分块响应之前数据: " << data << std::endl;
+    //     std::cout << "分块响应之前大小:" << buffer_len << std::endl;
+    // } else {
+    //     std::cout << "分块响应之前数据为空:" << std::endl;
+    // }
     evhttp_send_reply_chunk(parsed_request_->request,output_buf);
-    size_t buffer_len1 = evbuffer_get_length(output_buf); 
-    if (buffer_len1 > 0) {
-        std::string data1(buffer_len1, '\0');  
-        evbuffer_copyout(output_buf, &data1[0], buffer_len1); 
-        std::cout << "分块响应之后数据: " << data1 << std::endl;
-        std::cout << "分块响应之后大小:" << buffer_len1 << std::endl;
-    } else {
-        std::cout << "分块响应之后数据为空:" << std::endl;
-    }
+    // size_t buffer_len1 = evbuffer_get_length(output_buf); 
+    // if (buffer_len1 > 0) {
+    //     std::string data1(buffer_len1, '\0');  
+    //     evbuffer_copyout(output_buf, &data1[0], buffer_len1); 
+    //     std::cout << "分块响应之后数据: " << data1 << std::endl;
+    //     std::cout << "分块响应之后大小:" << buffer_len1 << std::endl;
+    // } else {
+    //     std::cout << "分块响应之后数据为空:" << std::endl;
+    // }
     std::cout << "分块响应" << std::endl;
   }
   evhttp_request* request_1 =parsed_request_->request;

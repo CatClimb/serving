@@ -174,7 +174,6 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
     offset+=current_chunk_size;
     //分块数据写入
     std::cout << "分块数据写入" << std::endl;
-    NET_LOG(OK, "块数id：",chunk_count);
     int ret = evbuffer_add(output_buf, chunk_data, current_chunk_size);
     if (ret == -1) {
       std::cout << "分块写入缓存失败" << std::endl;

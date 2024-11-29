@@ -180,6 +180,7 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
       NET_LOG(ERROR, "Failed to write %zu bytes data to output buffer",
               data_size);
     }
+    
     //分块响应
     size_t buffer_len = evbuffer_get_length(output_buf); // 获取缓冲区中数据的长度
     // if (buffer_len > 0) {
@@ -192,6 +193,7 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status)
     //     std::cout << "分块响应之前数据为空:" << std::endl;
     // }
     evhttp_send_reply_chunk(parsed_request_->request,output_buf);
+    evbuffer_drain(output_buf, evbuffer_get_length(output_buf));
     // size_t buffer_len1 = evbuffer_get_length(output_buf); 
     // if (buffer_len1 > 0) {
     //     std::string data1(buffer_len1, '\0');  
@@ -433,6 +435,7 @@ void EvHTTPRequest::EvSendReply2(evhttp_request* request) {
   //分块响应结束
   std::cout << "分块响应执行完毕" << std::endl;
   evhttp_send_reply_end(request);
+  evbuffer_free(output_buf);
   server_->DecOps();
   delete this;
 }

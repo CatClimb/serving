@@ -153,21 +153,22 @@ void EvHTTPRequest::WriteResponseBytes(const char* data, int64_t size) {
 
   
 }
-void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status){
+void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status,int64_t chunk_size,int64_t ms){
   int64_t data_size = static_cast<int64_t>(data.size());
-  int64_t chunk_size=1024;
   int64_t offset=0;
   int64_t remaining_size;
   int64_t current_chunk_size;
   int64_t chunk_count=0;
   const char* chunk_data="";
+  std::cout << "当前块尺寸：" <<chunk_size<<std::endl;
+  std::cout << "当前延时ms：" <<ms<<std::endl;
     //分块响应开启
   evhttp_send_reply_start(parsed_request_->request,static_cast<int>(status),"OK");
   std::cout << "分块响应发送开启" << std::endl;
   while(offset < data_size){
     chunk_count++;
     std::cout << "块数id：" <<chunk_count<<std::endl;
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     remaining_size = data_size-offset;
     current_chunk_size = (remaining_size < chunk_size) ? remaining_size : chunk_size;
     chunk_data = data.substr(offset, current_chunk_size).data();
@@ -435,7 +436,6 @@ void EvHTTPRequest::EvSendReply2(evhttp_request* request) {
   //分块响应结束
   std::cout << "分块响应执行完毕" << std::endl;
   evhttp_send_reply_end(request);
-  evbuffer_free(output_buf);
   server_->DecOps();
   delete this;
 }

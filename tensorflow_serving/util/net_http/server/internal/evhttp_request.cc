@@ -26,7 +26,7 @@ limitations under the License.
 #include <cstring>
 #include <string>
 #include <vector>
-
+#include <cmath> 
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -123,8 +123,16 @@ EvHTTPRequest::EvHTTPRequest(std::unique_ptr<ParsedEvRequest> request,
                              ServerSupport* server)
     : server_(server),
       parsed_request_(std::move(request)),
-      output_buf(nullptr) {}
-
+      output_buf(nullptr) {},
+      data_size(0) {},
+      offset(0) {},
+      remaining_size(0) {},
+      current_chunk_size(0) {},
+      chunk_data("") {},
+      chunk_number(0) {},
+      chunk_count(0) {},
+      chunk_size_tmp(0) {},
+      ms_tmp(0) {}
 EvHTTPRequest::~EvHTTPRequest() {
   if (output_buf != nullptr) {
     evbuffer_free(output_buf);
@@ -154,71 +162,56 @@ void EvHTTPRequest::WriteResponseBytes(const char* data, int64_t size) {
   
 }
 void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status,int64_t chunk_size,int64_t ms){
-  int64_t data_size = static_cast<int64_t>(data.size());
-  int64_t offset=0;
-  int64_t remaining_size;
-  int64_t current_chunk_size;
-  int64_t chunk_count=0;
-  const char* chunk_data="";
-  std::cout << "当前块尺寸：" <<chunk_size<<std::endl;
-  std::cout << "当前延时ms：" <<ms<<std::endl;
+  chunk_size_tmp=chunk_size;
+  ms_tmp=ms;
+  data_size = static_cast<int64_t>(data.size());
+  chunk_count=(int64_t)std::ceil((double)data_size / chunk_size);
+  std::cout << "当前块尺寸：" <<chunk_size_tmp<<std::endl;
+  std::cout << "当前延时ms：" <<ms_tmp<<std::endl;
     //分块响应开启
   evhttp_send_reply_start(parsed_request_->request,static_cast<int>(status),"OK");
   std::cout << "分块响应发送开启" << std::endl;
-  while(offset < data_size){
-    chunk_count++;
-    std::cout << "块数id：" <<chunk_count<<std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-    remaining_size = data_size-offset;
-    current_chunk_size = (remaining_size < chunk_size) ? remaining_size : chunk_size;
-    chunk_data = data.substr(offset, current_chunk_size).data();
-    offset+=current_chunk_size;
-    //分块数据写入
-    std::cout << "分块数据写入" << std::endl;
-    int ret = evbuffer_add(output_buf, chunk_data, current_chunk_size);
-    if (ret == -1) {
-      std::cout << "分块写入缓存失败" << std::endl;
-      NET_LOG(ERROR, "Failed to write %zu bytes data to output buffer",
-              data_size);
+  replay_chunk_cb();
+}
+/**响应块回调 */
+void EvHTTPRequest::replay_chunk_cb() {
+  struct evbuffer *buf = evbuffer_new();
+  chunk_number++;
+  std::cout << "块数id：" <<chunk_number<<std::endl;
+  std::this_thread::sleep_for(std::chrono::milliseconds(ms_tmp));
+  remaining_size = data_size-offset;
+  current_chunk_size = (remaining_size < chunk_size_tmp) ? remaining_size : chunk_size_tmp;
+  chunk_data = data.substr(offset, current_chunk_size).data();
+  offset+=current_chunk_size;
+  //分块数据写入
+  std::cout << "分块数据写入" << std::endl;
+  int ret = evbuffer_add(buf, chunk_data, current_chunk_size);
+  if (ret == -1) {
+    std::cout << "分块写入缓存失败" << std::endl;
+    NET_LOG(ERROR, "Failed to write %zu bytes data to output buffer",
+            data_size);
+    return;
+  } 
+  //分块响应
+  evhttp_send_reply_chunk_with_cb(parsed_request_->request, buf, replay_chunk_cb, NULL);
+  evbuffer_free(buf);
+  std::cout << "分块响应" << std::endl;
+  
+  if(offset < data_size){
+    evhttp_request* request_1 =parsed_request_->request;
+    bool result =
+      server_->EventLoopSchedule([this, request_1]() {
+        EvSendReply2(request_1);
+        });
+    if (!result) {
+      NET_LOG(ERROR, "Failed to EventLoopSchedule ReplyWithStatus()");
+      Abort();
+      // TODO(wenboz): should have a forced abort that doesn't write back anything
+      // to the event-loop
     }
-    
-    //分块响应
-    size_t buffer_len = evbuffer_get_length(output_buf); // 获取缓冲区中数据的长度
-    // if (buffer_len > 0) {
-    //     std::string data(buffer_len, '\0');  
-    //     evbuffer_copyout(output_buf, &data[0], buffer_len);
-    //     // 打印转换后的字符串
-    //     std::cout << "分块响应之前数据: " << data << std::endl;
-    //     std::cout << "分块响应之前大小:" << buffer_len << std::endl;
-    // } else {
-    //     std::cout << "分块响应之前数据为空:" << std::endl;
-    // }
-    evhttp_send_reply_chunk(parsed_request_->request,output_buf);
-    evbuffer_drain(output_buf, evbuffer_get_length(output_buf));
-    // size_t buffer_len1 = evbuffer_get_length(output_buf); 
-    // if (buffer_len1 > 0) {
-    //     std::string data1(buffer_len1, '\0');  
-    //     evbuffer_copyout(output_buf, &data1[0], buffer_len1); 
-    //     std::cout << "分块响应之后数据: " << data1 << std::endl;
-    //     std::cout << "分块响应之后大小:" << buffer_len1 << std::endl;
-    // } else {
-    //     std::cout << "分块响应之后数据为空:" << std::endl;
-    // }
-    std::cout << "分块响应" << std::endl;
-  }
-  evhttp_request* request_1 =parsed_request_->request;
-  bool result =
-    server_->EventLoopSchedule([this, request_1]() {
-       EvSendReply2(request_1);
-       });
-  if (!result) {
-    NET_LOG(ERROR, "Failed to EventLoopSchedule ReplyWithStatus()");
-    Abort();
-    // TODO(wenboz): should have a forced abort that doesn't write back anything
-    // to the event-loop
+    return;
   }
 }
-
 void EvHTTPRequest::WriteResponseString(absl::string_view data) {
   WriteResponseBytes(data.data(), static_cast<int64_t>(data.size()));
 }

@@ -80,7 +80,9 @@ class EvHTTPRequest final : public ServerRequestInterface {
   void WriteResponseBytes(const char* data, int64_t size) override;
 
   void WriteResponseString(absl::string_view data) override;
+
   void StreamResponse(absl::string_view data,HTTPStatusCode status,int64_t chunk_size,int64_t ms) override;
+  
   std::unique_ptr<char[], ServerRequestInterface::BlockDeleter>
   ReadRequestBytes(int64_t* size) override;
 
@@ -131,7 +133,15 @@ class EvHTTPRequest final : public ServerRequestInterface {
   const RequestHandlerOptions* handler_options_;
 
   std::unique_ptr<ParsedEvRequest> parsed_request_;
-
+  int64_t data_size;
+  int64_t offset;
+  int64_t remaining_size;
+  int64_t current_chunk_size;
+  char* chunk_data;
+  int64_t chunk_number;
+  int64_t chunk_count;
+  int64_t chunk_size_tmp;
+  int64_t ms_tmp;
   evbuffer* output_buf;  // owned by this
 };
 

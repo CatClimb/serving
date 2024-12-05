@@ -201,7 +201,7 @@ void EvHTTPRequest::replay_chunk_cb() {
   //     // 使用 lambda 表达式绑定成员函数
   //     this->replay_chunk_cb();
   //   }
-    std::bind(&EvHTTPRequest::replay_chunk_cb),
+    std::bind(&EvHTTPRequest::replay_chunk_cb,this, std::placeholders::_1, std::placeholders::_2),
   NULL);
   evbuffer_free(buf);
   std::cout << "分块响应" << std::endl;

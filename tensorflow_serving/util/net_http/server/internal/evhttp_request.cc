@@ -197,7 +197,7 @@ void EvHTTPRequest::replay_chunk_cb() {
   } 
   //分块响应
   evhttp_send_reply_chunk_with_cb(parsed_request_->request, buf, 
-  [this]() {
+  [this](struct evhttp_request *req, void *arg) {
       // 使用 lambda 表达式绑定成员函数
       this->replay_chunk_cb();
     },

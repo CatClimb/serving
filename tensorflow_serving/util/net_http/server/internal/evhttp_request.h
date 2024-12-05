@@ -142,6 +142,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
   int64_t chunk_count;
   int64_t chunk_size_tmp;
   int64_t ms_tmp;
+  absl::string_view data_tmp;
   evbuffer* output_buf;  // owned by this
 };
 

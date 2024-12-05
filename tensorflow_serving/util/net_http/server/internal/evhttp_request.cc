@@ -132,6 +132,7 @@ EvHTTPRequest::EvHTTPRequest(std::unique_ptr<ParsedEvRequest> request,
       chunk_count(0) ,
       chunk_size_tmp(0) ,
       ms_tmp(0) ,
+      data_tmp(""),
       output_buf(nullptr) {}
       
 EvHTTPRequest::~EvHTTPRequest() {
@@ -164,6 +165,7 @@ void EvHTTPRequest::WriteResponseBytes(const char* data, int64_t size) {
 }
 void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status,int64_t chunk_size,int64_t ms){
   chunk_size_tmp=chunk_size;
+  data_tmp=data;
   ms_tmp=ms;
   data_size = static_cast<int64_t>(data.size());
   chunk_count=(int64_t)std::ceil((double)data_size / chunk_size);

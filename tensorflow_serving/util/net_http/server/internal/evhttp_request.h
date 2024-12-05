@@ -82,7 +82,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
   void WriteResponseString(absl::string_view data) override;
 
   void StreamResponse(absl::string_view data,HTTPStatusCode status,int64_t chunk_size,int64_t ms) override;
-  
+  void EvHTTPRequest::replay_chunk_cb() override;
   std::unique_ptr<char[], ServerRequestInterface::BlockDeleter>
   ReadRequestBytes(int64_t* size) override;
 

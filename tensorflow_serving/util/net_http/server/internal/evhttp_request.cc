@@ -123,16 +123,17 @@ EvHTTPRequest::EvHTTPRequest(std::unique_ptr<ParsedEvRequest> request,
                              ServerSupport* server)
     : server_(server),
       parsed_request_(std::move(request)),
-      output_buf(nullptr) {},
-      data_size(0) {},
-      offset(0) {},
-      remaining_size(0) {},
-      current_chunk_size(0) {},
-      chunk_data("") {},
-      chunk_number(0) {},
-      chunk_count(0) {},
-      chunk_size_tmp(0) {},
-      ms_tmp(0) {}
+      data_size(0) ,
+      offset(0) ,
+      remaining_size(0) ,
+      current_chunk_size(0) ,
+      chunk_data("") ,
+      chunk_number(0) ,
+      chunk_count(0) ,
+      chunk_size_tmp(0) ,
+      ms_tmp(0) ,
+      output_buf(nullptr) {}
+      
 EvHTTPRequest::~EvHTTPRequest() {
   if (output_buf != nullptr) {
     evbuffer_free(output_buf);

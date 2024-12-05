@@ -184,7 +184,7 @@ void EvHTTPRequest::replay_chunk_cb() {
   std::this_thread::sleep_for(std::chrono::milliseconds(ms_tmp));
   remaining_size = data_size-offset;
   current_chunk_size = (remaining_size < chunk_size_tmp) ? remaining_size : chunk_size_tmp;
-  chunk_data = data.substr(offset, current_chunk_size).data();
+  chunk_data = data_tmp.substr(offset, current_chunk_size).data();
   offset+=current_chunk_size;
   //分块数据写入
   std::cout << "分块数据写入" << std::endl;

@@ -82,7 +82,6 @@ class EvHTTPRequest final : public ServerRequestInterface {
   void WriteResponseString(absl::string_view data) override;
 
   void StreamResponse(absl::string_view data,HTTPStatusCode status,int64_t chunk_size,int64_t ms) override;
-  void replay_chunk_cb() override;
   std::unique_ptr<char[], ServerRequestInterface::BlockDeleter>
   ReadRequestBytes(int64_t* size) override;
 
@@ -117,6 +116,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
  private:
   void EvSendReply(HTTPStatusCode status);
   void EvSendReply2(evhttp_request* request);
+  void replay_chunk_cb();
   // Returns true if the data needs be uncompressed
   bool NeedUncompressGzipContent();
 
@@ -137,7 +137,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
   int64_t offset;
   int64_t remaining_size;
   int64_t current_chunk_size;
-  char* chunk_data;
+  const char* chunk_data;
   int64_t chunk_number;
   int64_t chunk_count;
   int64_t chunk_size_tmp;

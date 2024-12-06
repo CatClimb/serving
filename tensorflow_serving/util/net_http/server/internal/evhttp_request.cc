@@ -175,9 +175,12 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status,
     //分块响应开启
   evhttp_send_reply_start(parsed_request_->request,static_cast<int>(status),"OK");
   std::cout << "分块响应发送开启" << std::endl;
-  replay_chunk_cb(NULL,static_cast<void*>(this));
+  replay_chunk_static_callback(NULL,static_cast<void*>(this));
 }
-
+static void EvHTTPRequest::replay_chunk_static_callback(evhttp_connection* conn, void* arg) {
+    EvHTTPRequest* self = static_cast<EvHTTPRequest*>(arg);  // 通过 arg 获取到当前对象的实例
+    self->replay_chunk_cb(conn, arg);  // 调用成员函数
+}
 /**响应块回调 */
 void EvHTTPRequest::replay_chunk_cb(struct evhttp_connection *conn, void *arg) {
   EvHTTPRequest* self = static_cast<EvHTTPRequest*>(arg);
@@ -199,13 +202,7 @@ void EvHTTPRequest::replay_chunk_cb(struct evhttp_connection *conn, void *arg) {
     return;
   } 
   //分块响应
-  evhttp_send_reply_chunk_with_cb(parsed_request_->request, buf, 
-  [this](struct evhttp_connection* conn, void *arg) {
-      // 使用 lambda 表达式绑定成员函数
-      EvHTTPRequest* self = static_cast<EvHTTPRequest*>(arg);
-      self->replay_chunk_cb(conn,arg);
-    },
-  self);
+  evhttp_send_reply_chunk_with_cb(parsed_request_->request, buf, replay_chunk_static_callback,self);
   evbuffer_free(buf);
   std::cout << "分块响应" << std::endl;
   

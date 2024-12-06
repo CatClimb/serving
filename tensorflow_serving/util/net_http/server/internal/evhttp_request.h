@@ -119,11 +119,11 @@ class EvHTTPRequest final : public ServerRequestInterface {
   void SetHandlerOptions(const RequestHandlerOptions& handler_options) {
     this->handler_options_ = &handler_options;
   }
-
+  void replay_chunk_cb(struct evhttp_connection* conn, void *arg);
  private:
   void EvSendReply(HTTPStatusCode status);
   void EvSendReply2(evhttp_request* request);
-  void replay_chunk_cb(struct evhttp_connection* conn, void *arg);
+  
   // Returns true if the data needs be uncompressed
   bool NeedUncompressGzipContent();
 

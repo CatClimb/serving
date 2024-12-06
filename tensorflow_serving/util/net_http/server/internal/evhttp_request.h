@@ -116,7 +116,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
  private:
   void EvSendReply(HTTPStatusCode status);
   void EvSendReply2(evhttp_request* request);
-  static void replay_chunk_static_callback(evhttp_connection* conn, void* arg);
+  static void replay_chunk_static_callback(struct evhttp_connection* conn, void* arg);
   void replay_chunk_cb(struct evhttp_connection *conn, void *arg);
   // Returns true if the data needs be uncompressed
   bool NeedUncompressGzipContent();

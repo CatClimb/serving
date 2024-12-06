@@ -208,7 +208,7 @@ void EvHTTPRequest::replay_chunk_cb(struct evhttp_connection* conn, void *arg) {
   evbuffer_free(buf);
   std::cout << "分块响应" << std::endl;
   
-  if(offset < data_size){
+  if(offset >= data_size){
     evhttp_request* request_1 =parsed_request_->request;
     bool result =
       server_->EventLoopSchedule([this, request_1]() {

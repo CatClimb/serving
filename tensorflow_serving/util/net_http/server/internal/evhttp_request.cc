@@ -163,6 +163,7 @@ void EvHTTPRequest::WriteResponseBytes(const char* data, int64_t size) {
 
   
 }
+
 void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status,int64_t chunk_size,int64_t ms){
   chunk_size_tmp=chunk_size;
   data_tmp=data;
@@ -176,8 +177,10 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status,
   std::cout << "分块响应发送开启" << std::endl;
   replay_chunk_cb();
 }
+
 /**响应块回调 */
-void EvHTTPRequest::replay_chunk_cb() {
+void EvHTTPRequest::replay_chunk_cb(struct evhttp_connection *conn, void *arg) {
+  EvHTTPRequest* self = static_cast<EvHTTPRequest*>(arg);
   struct evbuffer *buf = evbuffer_new();
   chunk_number++;
   std::cout << "块数id：" <<chunk_number<<std::endl;
@@ -197,11 +200,12 @@ void EvHTTPRequest::replay_chunk_cb() {
   } 
   //分块响应
   evhttp_send_reply_chunk_with_cb(parsed_request_->request, buf, 
-  [this](struct evhttp_connection* conn, void *arg) {
+  [](struct evhttp_connection* conn, void *arg) {
       // 使用 lambda 表达式绑定成员函数
-      this->replay_chunk_cb();
+      EvHTTPRequest* self = static_cast<EvHTTPRequest*>(arg);
+      self->replay_chunk_cb(conn,arg);
     },
-  NULL);
+  self);
   evbuffer_free(buf);
   std::cout << "分块响应" << std::endl;
   

@@ -21,7 +21,7 @@ limitations under the License.
 #include <cstdint>
 #include <memory>
 #include <string>
-
+#include <event2/http.h>
 #include "tensorflow_serving/util/net_http/server/internal/server_support.h"
 #include "tensorflow_serving/util/net_http/server/public/httpserver_interface.h"
 #include "tensorflow_serving/util/net_http/server/public/server_request_interface.h"
@@ -116,8 +116,8 @@ class EvHTTPRequest final : public ServerRequestInterface {
  private:
   void EvSendReply(HTTPStatusCode status);
   void EvSendReply2(evhttp_request* request);
-  static void replay_chunk_static_callback(struct evhttp_connection* conn, void* arg);
-  void replay_chunk_cb(struct evhttp_connection *conn, void *arg);
+  static void replay_chunk_static_callback(libevent::evhttp_connection* conn, void* arg);
+  void replay_chunk_cb(libevent::evhttp_connection* conn, void *arg);
   // Returns true if the data needs be uncompressed
   bool NeedUncompressGzipContent();
 

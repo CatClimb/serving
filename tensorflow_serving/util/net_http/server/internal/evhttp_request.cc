@@ -38,7 +38,7 @@ limitations under the License.
 #include "tensorflow_serving/util/net_http/internal/net_logging.h"
 #include "tensorflow_serving/util/net_http/public/header_names.h"
 
-void replay_chunk_static_callback(struct MyEvhttpConnection* conn, void* arg) {
+void replay_chunk_static_callback(struct evhttp_connection* conn, void* arg) {
     tensorflow::serving::net_http::EvHTTPRequest* self = static_cast<tensorflow::serving::net_http::EvHTTPRequest*>(arg);  // 通过 arg 获取到当前对象的实例
     self->replay_chunk_cb(conn, arg);  // 调用成员函数
 }
@@ -179,12 +179,12 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status,
     //分块响应开启
   evhttp_send_reply_start(parsed_request_->request,static_cast<int>(status),"OK");
   std::cout << "分块响应发送开启" << std::endl;
-  struct MyEvhttpConnection *xx = nullptr; 
+  struct evhttp_connection *xx = nullptr; 
   replay_chunk_cb(xx, static_cast<void*>(this));
 }
 
 /**响应块回调 */
-void EvHTTPRequest::replay_chunk_cb(struct MyEvhttpConnection* conn, void *arg) {
+void EvHTTPRequest::replay_chunk_cb(struct evhttp_connection* conn, void *arg) {
   
   struct evbuffer *buf = evbuffer_new();
   chunk_number++;

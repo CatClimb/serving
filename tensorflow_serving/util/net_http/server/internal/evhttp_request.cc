@@ -175,7 +175,7 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status,
     //分块响应开启
   evhttp_send_reply_start(parsed_request_->request,static_cast<int>(status),"OK");
   std::cout << "分块响应发送开启" << std::endl;
-  replay_chunk_cb();
+  replay_chunk_cb(NULL,this);
 }
 
 /**响应块回调 */

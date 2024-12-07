@@ -38,6 +38,7 @@ struct evhttp_uri;
 struct evkeyvalq;
 struct evhttp_connection;
 void replay_chunk_static_callback(struct evhttp_connection* conn, void* arg);
+void replay_chunk_end_static_callback(struct evhttp_connection* conn, void* arg);
 namespace tensorflow {
 namespace serving {
 namespace net_http {
@@ -120,6 +121,7 @@ class EvHTTPRequest final : public ServerRequestInterface {
     this->handler_options_ = &handler_options;
   }
   void replay_chunk_cb(struct evhttp_connection* conn, void *arg);
+  void replay_chunk_end_cb(struct evhttp_connection* conn, void *arg);
  private:
   void EvSendReply(HTTPStatusCode status);
   void EvSendReply2(evhttp_request* request);

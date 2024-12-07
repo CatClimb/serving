@@ -42,6 +42,10 @@ void replay_chunk_static_callback(struct evhttp_connection* conn, void* arg) {
     tensorflow::serving::net_http::EvHTTPRequest* self = static_cast<tensorflow::serving::net_http::EvHTTPRequest*>(arg);  // 通过 arg 获取到当前对象的实例
     self->replay_chunk_cb(conn, arg);  // 调用成员函数
 }
+void replay_chunk_end_static_callback(struct evhttp_connection* conn, void* arg) {
+    tensorflow::serving::net_http::EvHTTPRequest* self = static_cast<tensorflow::serving::net_http::EvHTTPRequest*>(arg);  // 通过 arg 获取到当前对象的实例
+    self->replay_chunk_end_cb(conn, arg);  // 调用成员函数
+}
 namespace tensorflow {
 namespace serving {
 namespace net_http {
@@ -203,13 +207,26 @@ void EvHTTPRequest::replay_chunk_cb(struct evhttp_connection* conn, void *arg) {
             data_size);
     return;
   } 
-  //分块响应
-  evhttp_send_reply_chunk_with_cb(parsed_request_->request, buf, replay_chunk_static_callback,static_cast<void*>(this));
-  evbuffer_free(buf);
-  std::cout << "分块响应" << std::endl;
-  
   if(offset >= data_size){
-    evhttp_request* request_1 =parsed_request_->request;
+    evhttp_send_reply_chunk_with_cb(parsed_request_->request, buf, replay_chunk_end_static_callback,static_cast<void*>(this));
+    evbuffer_free(buf);
+    
+  }else{
+    //分块响应
+    evhttp_send_reply_chunk_with_cb(parsed_request_->request, buf, replay_chunk_static_callback,static_cast<void*>(this));
+    evbuffer_free(buf);
+    std::cout << "分块响应" << std::endl;
+  }
+
+  
+
+}
+void EvHTTPRequest::WriteResponseString(absl::string_view data) {
+  WriteResponseBytes(data.data(), static_cast<int64_t>(data.size()));
+}
+
+void EvHTTPRequest::replay_chunk_end_cb(struct evhttp_connection* conn, void *arg){
+  evhttp_request* request_1 =parsed_request_->request;
     bool result =
       server_->EventLoopSchedule([this, request_1]() {
         EvSendReply2(request_1);
@@ -220,13 +237,8 @@ void EvHTTPRequest::replay_chunk_cb(struct evhttp_connection* conn, void *arg) {
       // TODO(wenboz): should have a forced abort that doesn't write back anything
       // to the event-loop
     }
-    return;
-  }
+  return;
 }
-void EvHTTPRequest::WriteResponseString(absl::string_view data) {
-  WriteResponseBytes(data.data(), static_cast<int64_t>(data.size()));
-}
-
 std::unique_ptr<char[], ServerRequestInterface::BlockDeleter>
 EvHTTPRequest::ReadRequestBytes(int64_t* size) {
   evbuffer* input_buf =

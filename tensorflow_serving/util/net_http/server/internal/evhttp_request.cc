@@ -177,7 +177,7 @@ void EvHTTPRequest::StreamResponse(absl::string_view data,HTTPStatusCode status,
   data_tmp=data;
   ms_tmp=ms;
   data_size = static_cast<int64_t>(data.size());
-  chunk_count=(int64_t)std::ceil((double)data_size / chunk_size);
+  chunk_count=(int64_t)std::ceil((double)data_size / chunk_size_tmp);
   std::cout << "当前块尺寸：" <<chunk_size_tmp<<std::endl;
   std::cout << "当前延时ms：" <<ms_tmp<<std::endl;
     //分块响应开启
